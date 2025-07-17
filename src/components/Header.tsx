@@ -36,7 +36,7 @@ export const Header: React.FC<HeaderProps> = ({ postsCount, onRefreshPosts }) =>
       
       <div className="px-4 pb-3">
         <p className="text-sm text-gray-600">
-          📍 マップをクリックして、その場所での気分を投稿しよう！他のユーザーの投稿もリアルタイムで表示されます。
+          📍 マップをクリックして、その場所での気分を投稿しよう！
         </p>
         <p className="text-xs text-gray-500 mt-1">
           ⏰ 投稿は24時間後に自動的に削除されます

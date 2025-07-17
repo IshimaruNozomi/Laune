@@ -4,7 +4,7 @@ import { Header } from './components/Header';
 import { useMoodPosts } from './hooks/useMoodPosts';
 
 function App() {
-  const { posts, addPost, clearPosts, refreshPosts, loading, error } = useMoodPosts();
+  const { posts, addPost, refreshPosts, loading, error } = useMoodPosts();
 
   if (loading) {
     return (
@@ -21,7 +21,6 @@ function App() {
     <div className="w-full h-screen relative">
       <Header 
         postsCount={posts.length} 
-        onClearPosts={clearPosts}
         onRefreshPosts={refreshPosts}
       />
       {error && (

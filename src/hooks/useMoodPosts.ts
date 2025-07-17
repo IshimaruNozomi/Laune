@@ -77,15 +77,9 @@ export const useMoodPosts = () => {
     loadPosts();
   };
 
-  const clearPosts = () => {
-    setPosts([]);
-    localStorage.removeItem('mood-posts');
-  };
-
   return { 
     posts, 
     addPost, 
-    clearPosts, 
     refreshPosts, 
     loading, 
     error 

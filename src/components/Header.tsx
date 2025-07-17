@@ -13,7 +13,7 @@ export const Header: React.FC<HeaderProps> = ({ postsCount, onClearPosts }) => {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <MapPin className="text-blue-500" size={24} />
-            <h1 className="text-xl font-bold text-gray-800">気分マップ</h1>
+            <h1 className="text-xl font-bold text-gray-800">Laune Map</h1>
           </div>
           <div className="flex items-center gap-1 text-sm text-gray-600">
             <Heart size={16} className="text-red-500" />

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MoodPost, MapPosition } from '../types';
 import { MoodForm } from './MoodForm';
+import { loadGoogleMapsAPI } from '../utils/googleMaps';
 
 interface GoogleMapComponentProps {
   posts: MoodPost[];
@@ -25,15 +26,30 @@ export const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ posts, o
   const mapRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [selectedPosition, setSelectedPosition] = useState<MapPosition | null>(null);
-  const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
-  const [infoWindows, setInfoWindows] = useState<google.maps.InfoWindow[]>([]);
+  const markersRef = useRef<google.maps.Marker[]>([]);
+  const infoWindowsRef = useRef<google.maps.InfoWindow[]>([]);
+  const [isAPILoaded, setIsAPILoaded] = useState(false);
+  const [openInfoWindowId, setOpenInfoWindowId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!mapRef.current || !window.google) return;
+    const initializeAPI = async () => {
+      try {
+        await loadGoogleMapsAPI();
+        setIsAPILoaded(true);
+      } catch (error) {
+        console.error('Failed to load Google Maps API:', error);
+      }
+    };
+
+    initializeAPI();
+  }, []);
+
+  useEffect(() => {
+    if (!mapRef.current || !isAPILoaded || !window.google) return;
 
     // 東京駅を中心にマップを初期化
     initializeMap(35.6762, 139.6503);
-  }, []);
+  }, [isAPILoaded]);
 
   const initializeMap = (lat: number, lng: number) => {
     if (!mapRef.current) return;
@@ -53,6 +69,9 @@ export const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ posts, o
     // マップクリックイベント
     mapInstance.addListener('click', (e: google.maps.MapMouseEvent) => {
       if (e.latLng) {
+        // インフォウィンドウを閉じる
+        setOpenInfoWindowId(null);
+        
         setSelectedPosition({
           lat: e.latLng.lat(),
           lng: e.latLng.lng()
@@ -68,11 +87,12 @@ export const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ posts, o
     if (!map) return;
 
     // 既存のマーカーとインフォウィンドウを削除
-    markers.forEach(marker => marker.setMap(null));
-    infoWindows.forEach(infoWindow => infoWindow.close());
+    markersRef.current.forEach(marker => marker.setMap(null));
+    infoWindowsRef.current.forEach(infoWindow => infoWindow.close());
 
     const newMarkers: google.maps.Marker[] = [];
     const newInfoWindows: google.maps.InfoWindow[] = [];
+    const markerInfoMap = new Map<string, { marker: google.maps.Marker, infoWindow: google.maps.InfoWindow }>();
 
     posts.forEach((post) => {
       // カスタムマーカーを作成
@@ -95,62 +115,71 @@ export const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ posts, o
       // インフォウィンドウを作成
       const infoWindow = new google.maps.InfoWindow({
         content: `
-          <div style="padding: 8px; min-width: 200px;">
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-              <span style="font-size: 24px;">${moodIcons[post.mood]}</span>
-              <span style="font-weight: 600; color: #1f2937;">${post.nickname}</span>
+          <div style="padding: 10px 14px; min-width: 200px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+              <span style="font-size: 20px;">${moodIcons[post.mood]}</span>
+              <span style="font-weight: 600; color: #1f2937; font-size: 15px;">${post.nickname}</span>
             </div>
-            <p style="font-size: 14px; color: #6b7280; margin-bottom: 8px; margin-top: 0;">
+            <div style="font-size: 13px; color: #4b5563; line-height: 1.3; margin-bottom: 6px;">
               ${post.comment}
-            </p>
-            <p style="font-size: 12px; color: #9ca3af; margin: 0;">
-              ${new Date(post.timestamp).toLocaleString()}
-            </p>
+            </div>
+            <div style="font-size: 11px; color: #9ca3af;">
+              ${new Date(post.timestamp).toLocaleString('ja-JP', { 
+                month: 'numeric', 
+                day: 'numeric', 
+                hour: '2-digit', 
+                minute: '2-digit' 
+              })}
+            </div>
           </div>
         `
       });
 
-      // マーカークリックでインフォウィンドウを表示
+      // マーカーとインフォウィンドウのマップに追加
+      markerInfoMap.set(post.id, { marker, infoWindow });
+
+      // マーカークリックでインフォウィンドウをトグル
       marker.addListener('click', () => {
-        // 他のインフォウィンドウを閉じる
-        newInfoWindows.forEach(iw => iw.close());
-        infoWindow.open(map, marker);
+        const isCurrentlyOpen = openInfoWindowId === post.id;
+        
+        if (isCurrentlyOpen) {
+          // 現在開いている場合は閉じる
+          infoWindow.close();
+          setOpenInfoWindowId(null);
+        } else {
+          // 他のインフォウィンドウを全て閉じる
+          markerInfoMap.forEach((item, id) => {
+            if (id !== post.id) {
+              item.infoWindow.close();
+            }
+          });
+          
+          // このインフォウィンドウを開く
+          infoWindow.open(map, marker);
+          setOpenInfoWindowId(post.id);
+        }
       });
 
       newMarkers.push(marker);
       newInfoWindows.push(infoWindow);
+    });
 
-      // 投稿密度が低い場合は常時表示
-      const shouldShowTooltip = shouldShowTooltipForPost(post);
-      if (shouldShowTooltip) {
-        const tooltipWindow = new google.maps.InfoWindow({
-          content: `
-            <div style="padding: 4px 8px; font-size: 12px;">
-              <div style="font-weight: 500; margin-bottom: 2px;">${post.nickname}</div>
-              <div style="color: #6b7280;">${post.comment}</div>
-            </div>
-          `,
-          disableAutoPan: true
-        });
-        tooltipWindow.open(map, marker);
-        newInfoWindows.push(tooltipWindow);
+    markersRef.current = newMarkers;
+    infoWindowsRef.current = newInfoWindows;
+
+    // 現在開いているインフォウィンドウを復元
+    if (openInfoWindowId) {
+      const targetPost = posts.find(p => p.id === openInfoWindowId);
+      if (targetPost) {
+        const targetInfo = markerInfoMap.get(openInfoWindowId);
+        if (targetInfo) {
+          targetInfo.infoWindow.open(map, targetInfo.marker);
+        }
       }
-    });
+    }
+  }, [map, posts, openInfoWindowId]);
 
-    setMarkers(newMarkers);
-    setInfoWindows(newInfoWindows);
-  }, [map, posts]);
 
-  const shouldShowTooltipForPost = (post: MoodPost) => {
-    const radius = 0.01; // 約1km
-    const nearbyPosts = posts.filter(p => {
-      const distance = Math.sqrt(
-        Math.pow(p.lat - post.lat, 2) + Math.pow(p.lng - post.lng, 2)
-      );
-      return distance <= radius && p.id !== post.id;
-    });
-    return nearbyPosts.length < 3;
-  };
 
   const handleSubmit = (post: Omit<MoodPost, 'id' | 'timestamp'>) => {
     onAddPost(post);

@@ -75,3 +75,26 @@ html, body {
 .z-1002 {
   z-index: 1002;
 }
+
+/* Google Maps インフォウィンドウの改善 */
+.gm-style .gm-style-iw-c {
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.gm-style .gm-style-iw-d {
+  overflow: visible !important;
+  padding: 0 !important;
+}
+
+.gm-style .gm-style-iw-t::after {
+  background: #ffffff;
+  border-radius: 3px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* インフォウィンドウの閉じるボタンを非表示 */
+.gm-style .gm-style-iw button {
+  display: none !important;
+}

@@ -98,33 +98,3 @@ html, body {
 .gm-style .gm-style-iw button {
   display: none !important;
 }
-
-/* Google Maps コントロールの位置調整 */
-.gm-style .gm-bundled-control {
-  margin-top: 100px !important;
-}
-
-.gm-style .gm-bundled-control-on-bottom {
-  margin-top: 0 !important;
-}
-
-/* ズームコントロールの位置調整 */
-.gm-style .gm-bundled-control .gm-bundled-control-on-bottom .gmnoprint {
-  margin-top: 100px !important;
-}
-
-/* 全画面コントロールとその他右上のコントロールの位置調整 */
-.gm-style .gm-control-active {
-  margin-top: 100px !important;
-}
-
-/* モバイル向けのGoogle Mapsコントロール調整 */
-@media (max-width: 768px) {
-  .gm-style .gm-bundled-control {
-    margin-top: 90px !important;
-  }
-  
-  .gm-style .gm-control-active {
-    margin-top: 90px !important;
-  }
-}

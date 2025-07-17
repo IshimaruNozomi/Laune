@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MoodPost, MapPosition } from '../types';
 import { MoodForm } from './MoodForm';
+import { MapControls } from './MapControls';
 import { loadGoogleMapsAPI } from '../utils/googleMaps';
 import { filterRecentPosts } from '../utils/timeFilter';
 
@@ -33,6 +34,8 @@ export const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ posts, o
   const [openInfoWindowId, setOpenInfoWindowId] = useState<string | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
   const [forceUpdate, setForceUpdate] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [mapType, setMapType] = useState<'roadmap' | 'satellite'>('roadmap');
 
   useEffect(() => {
     const initializeAPI = async () => {
@@ -49,28 +52,14 @@ export const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ posts, o
     initializeAPI();
   }, []);
 
-  // 定期的にマーカーを更新してリアルタイムで期限切れ投稿を削除
-  useEffect(() => {
-    const updateInterval = setInterval(() => {
-      setForceUpdate(prev => prev + 1);
-    }, 60 * 1000); // 1分間隔
-
-    return () => clearInterval(updateInterval);
-  }, []);
-
-  useEffect(() => {
-    if (!mapRef.current || !isAPILoaded || !window.google) return;
-
-    // 東京駅を中心にマップを初期化
-    initializeMap(35.6762, 139.6503);
-  }, [isAPILoaded]);
-
-  const initializeMap = (lat: number, lng: number) => {
+  // マップ初期化関数
+  const initializeMap = useCallback((lat: number, lng: number) => {
     if (!mapRef.current) return;
 
     const mapInstance = new google.maps.Map(mapRef.current, {
       center: { lat, lng },
       zoom: 15,
+      mapTypeId: mapType,
       styles: [
         {
           featureType: 'poi',
@@ -78,23 +67,13 @@ export const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ posts, o
           stylers: [{ visibility: 'off' }]
         }
       ],
-      mapTypeControl: true,
-      mapTypeControlOptions: {
-        position: google.maps.ControlPosition.TOP_RIGHT,
-        style: google.maps.MapTypeControlStyle.DROPDOWN_MENU
-      },
-      zoomControl: true,
-      zoomControlOptions: {
-        position: google.maps.ControlPosition.RIGHT_TOP
-      },
-      fullscreenControl: true,
-      fullscreenControlOptions: {
-        position: google.maps.ControlPosition.TOP_RIGHT
-      },
-      streetViewControl: true,
-      streetViewControlOptions: {
-        position: google.maps.ControlPosition.RIGHT_TOP
-      }
+      // デフォルトのコントロールを無効化
+      mapTypeControl: false,
+      zoomControl: false,
+      fullscreenControl: false,
+      streetViewControl: false,
+      scaleControl: false,
+      rotateControl: false
     });
 
     // マップクリックイベント
@@ -111,7 +90,68 @@ export const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ posts, o
     });
 
     setMap(mapInstance);
+  }, [mapType]);
+
+  // 定期的にマーカーを更新してリアルタイムで期限切れ投稿を削除
+  useEffect(() => {
+    const updateInterval = setInterval(() => {
+      setForceUpdate(prev => prev + 1);
+    }, 60 * 1000); // 1分間隔
+
+    return () => clearInterval(updateInterval);
+  }, []);
+
+  useEffect(() => {
+    if (!mapRef.current || !isAPILoaded || !window.google) return;
+
+    // 東京駅を中心にマップを初期化
+    initializeMap(35.6762, 139.6503);
+  }, [isAPILoaded, initializeMap]);
+
+  // カスタムコントロールのハンドラー
+  const handleZoomIn = () => {
+    if (map) {
+      const currentZoom = map.getZoom() || 15;
+      map.setZoom(currentZoom + 1);
+    }
   };
+
+  const handleZoomOut = () => {
+    if (map) {
+      const currentZoom = map.getZoom() || 15;
+      map.setZoom(currentZoom - 1);
+    }
+  };
+
+  const handleToggleMapType = () => {
+    if (map) {
+      const newMapType = mapType === 'roadmap' ? 'satellite' : 'roadmap';
+      setMapType(newMapType);
+      map.setMapTypeId(newMapType);
+    }
+  };
+
+  const handleToggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      mapRef.current?.requestFullscreen?.();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen?.();
+      setIsFullscreen(false);
+    }
+  };
+
+  // 全画面状態の監視
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
 
   // 投稿マーカーを更新
   useEffect(() => {
@@ -251,6 +291,18 @@ export const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ posts, o
       )}
       
       <div ref={mapRef} className="w-full h-full" />
+      
+      {/* カスタムマップコントロール */}
+      {isAPILoaded && !apiError && (
+        <MapControls
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
+          onToggleFullscreen={handleToggleFullscreen}
+          onToggleMapType={handleToggleMapType}
+          isFullscreen={isFullscreen}
+          mapType={mapType}
+        />
+      )}
       
       <MoodForm
         selectedPosition={selectedPosition}

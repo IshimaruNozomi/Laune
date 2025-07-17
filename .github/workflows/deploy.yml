@@ -30,7 +30,11 @@ jobs:
         cache: 'npm'
         
     - name: Install dependencies
-      run: npm ci
+      run: |
+        echo "Node version: $(node --version)"
+        echo "NPM version: $(npm --version)"
+        npm ci
+        echo "Dependencies installed successfully"
       
     - name: Check environment variables before build
       run: |

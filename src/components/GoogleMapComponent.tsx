@@ -30,14 +30,17 @@ export const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ posts, o
   const infoWindowsRef = useRef<google.maps.InfoWindow[]>([]);
   const [isAPILoaded, setIsAPILoaded] = useState(false);
   const [openInfoWindowId, setOpenInfoWindowId] = useState<string | null>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   useEffect(() => {
     const initializeAPI = async () => {
       try {
         await loadGoogleMapsAPI();
         setIsAPILoaded(true);
+        setApiError(null);
       } catch (error) {
         console.error('Failed to load Google Maps API:', error);
+        setApiError('Google Maps APIの読み込みに失敗しました。APIキーを確認してください。');
       }
     };
 
@@ -192,6 +195,25 @@ export const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ posts, o
 
   return (
     <div className="relative w-full h-full">
+      {!isAPILoaded && !apiError && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-50">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <p className="text-gray-600">マップを読み込み中...</p>
+          </div>
+        </div>
+      )}
+      
+      {apiError && (
+        <div className="absolute inset-0 flex items-center justify-center bg-red-50 z-50">
+          <div className="text-center p-6">
+            <div className="text-red-500 text-6xl mb-4">⚠️</div>
+            <p className="text-red-700 font-semibold mb-2">マップの読み込みエラー</p>
+            <p className="text-red-600 text-sm">{apiError}</p>
+          </div>
+        </div>
+      )}
+      
       <div ref={mapRef} className="w-full h-full" />
       
       <MoodForm

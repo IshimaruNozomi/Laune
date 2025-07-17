@@ -1,12 +1,13 @@
 import React from 'react';
-import { MapPin, Heart, Trash2 } from 'lucide-react';
+import { MapPin, Heart, Trash2, RefreshCw } from 'lucide-react';
 
 interface HeaderProps {
   postsCount: number;
   onClearPosts: () => void;
+  onRefreshPosts?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ postsCount, onClearPosts }) => {
+export const Header: React.FC<HeaderProps> = ({ postsCount, onClearPosts, onRefreshPosts }) => {
   return (
     <header className="absolute top-0 left-0 right-0 z-1000 bg-white bg-opacity-95 backdrop-blur-sm shadow-sm">
       <div className="flex items-center justify-between p-4">
@@ -22,6 +23,15 @@ export const Header: React.FC<HeaderProps> = ({ postsCount, onClearPosts }) => {
         </div>
         
         <div className="flex items-center gap-2">
+          {onRefreshPosts && (
+            <button
+              onClick={onRefreshPosts}
+              className="p-2 text-gray-500 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+              title="投稿を更新"
+            >
+              <RefreshCw size={18} />
+            </button>
+          )}
           <button
             onClick={onClearPosts}
             className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
@@ -34,7 +44,7 @@ export const Header: React.FC<HeaderProps> = ({ postsCount, onClearPosts }) => {
       
       <div className="px-4 pb-3">
         <p className="text-sm text-gray-600">
-          📍 マップをクリックして、その場所での気分を投稿しよう！
+          📍 マップをクリックして、その場所での気分を投稿しよう！他のユーザーの投稿もリアルタイムで表示されます。
         </p>
       </div>
     </header>

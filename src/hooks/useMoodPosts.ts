@@ -1,34 +1,59 @@
 import { useState, useEffect } from 'react';
 import { MoodPost } from '../types';
-
-const STORAGE_KEY = 'mood-posts';
+import { fetchPosts, addPost as apiAddPost } from '../utils/api';
 
 export const useMoodPosts = () => {
   const [posts, setPosts] = useState<MoodPost[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // 投稿を取得
+  const loadPosts = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const fetchedPosts = await fetchPosts();
+      setPosts(fetchedPosts);
+    } catch (err) {
+      setError('投稿の取得に失敗しました');
+      console.error('Failed to load posts:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const storedPosts = localStorage.getItem(STORAGE_KEY);
-    if (storedPosts) {
-      setPosts(JSON.parse(storedPosts));
-    }
+    loadPosts();
   }, []);
 
-  const addPost = (postData: Omit<MoodPost, 'id' | 'timestamp'>) => {
-    const newPost: MoodPost = {
-      ...postData,
-      id: Date.now().toString(),
-      timestamp: Date.now()
-    };
+  // 新しい投稿を追加
+  const addPost = async (postData: Omit<MoodPost, 'id' | 'timestamp'>) => {
+    try {
+      setError(null);
+      const newPost = await apiAddPost(postData);
+      setPosts(prevPosts => [...prevPosts, newPost]);
+    } catch (err) {
+      setError('投稿の保存に失敗しました');
+      console.error('Failed to add post:', err);
+    }
+  };
 
-    const updatedPosts = [...posts, newPost];
-    setPosts(updatedPosts);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedPosts));
+  // 投稿を再読み込み
+  const refreshPosts = () => {
+    loadPosts();
   };
 
   const clearPosts = () => {
     setPosts([]);
-    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem('mood-posts');
   };
 
-  return { posts, addPost, clearPosts };
+  return { 
+    posts, 
+    addPost, 
+    clearPosts, 
+    refreshPosts, 
+    loading, 
+    error 
+  };
 };

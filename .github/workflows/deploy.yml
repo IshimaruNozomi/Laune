@@ -36,6 +36,7 @@ jobs:
       run: npm run build
       env:
         VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
+        NODE_ENV: production
     
     - name: List build output
       run: ls -la dist/

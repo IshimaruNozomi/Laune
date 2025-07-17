@@ -38,6 +38,11 @@ jobs:
         VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
         NODE_ENV: production
     
+    - name: Check environment variables
+      run: |
+        echo "API Key exists: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY != '' && 'YES' || 'NO' }}"
+        echo "API Key length: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY && length(secrets.VITE_GOOGLE_MAPS_API_KEY) || 0 }}"
+    
     - name: Create .nojekyll file
       run: touch dist/.nojekyll
     

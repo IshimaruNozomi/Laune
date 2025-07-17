@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 基本スタイル */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+#root {
+  height: 100%;
+}
+
+/* マップコンテナ */
+.map-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #f0f9ff;
+  background-image: 
+    radial-gradient(circle at 25% 25%, #dbeafe 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, #fef3c7 0%, transparent 50%);
+}
+
+/* マップグリッド */
+.map-grid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    linear-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59, 130, 246, 0.1) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+/* アニメーション */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.mood-marker {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* モバイル対応 */
+@media (max-width: 768px) {
+  .mood-marker {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 20px !important;
+  }
+}
+
+/* Z-index調整 */
+.z-1000 {
+  z-index: 1000;
+}
+
+.z-1001 {
+  z-index: 1001;
+}
+
+.z-1002 {
+  z-index: 1002;
+}

@@ -38,11 +38,14 @@ jobs:
         VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
         NODE_ENV: production
     
+    - name: Create .nojekyll file
+      run: touch dist/.nojekyll
+    
     - name: List build output
       run: ls -la dist/
       
     - name: Show index.html content
-      run: cat dist/index.html
+      run: head -20 dist/index.html
         
     - name: Setup Pages
       uses: actions/configure-pages@v4

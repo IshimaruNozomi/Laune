@@ -58,7 +58,11 @@ jobs:
     - name: Check environment variables
       run: |
         echo "API Key exists: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY != '' && 'YES' || 'NO' }}"
-        echo "API Key length: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY && length(secrets.VITE_GOOGLE_MAPS_API_KEY) || 0 }}"
+        if [ -n "${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}" ]; then
+          echo "API Key is set and not empty"
+        else
+          echo "API Key is empty or not set"
+        fi
         
     - name: Check built files for API key
       run: |

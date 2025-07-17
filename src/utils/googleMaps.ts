@@ -24,12 +24,11 @@ export const loadGoogleMapsAPI = (): Promise<void> => {
     // 環境変数からAPIキーを取得
     const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
     
-    console.log('Environment variables:', {
-      MODE: import.meta.env.MODE,
-      BASE_URL: import.meta.env.BASE_URL,
-      API_KEY_SET: !!apiKey,
-      API_KEY_LENGTH: apiKey ? apiKey.length : 0
-    });
+    // デバッグ情報をコンソールに出力
+    console.log('Environment:', import.meta.env.MODE);
+    console.log('Base URL:', import.meta.env.BASE_URL);
+    console.log('API Key exists:', !!apiKey);
+    console.log('All env vars:', Object.keys(import.meta.env));
     
     if (!apiKey) {
       const errorMsg = 'Google Maps API key is not set. Please set VITE_GOOGLE_MAPS_API_KEY in your .env file.';

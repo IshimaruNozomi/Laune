@@ -32,6 +32,19 @@ jobs:
     - name: Install dependencies
       run: npm ci
       
+    - name: Check environment variables before build
+      run: |
+        echo "Checking environment variables..."
+        echo "NODE_ENV: $NODE_ENV"
+        echo "VITE_GOOGLE_MAPS_API_KEY is set: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY != '' && 'YES' || 'NO' }}"
+        if [ -n "${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}" ]; then
+          echo "API Key first 10 chars: $(echo '${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}' | cut -c1-10)..."
+        else
+          echo "API Key is empty or not set"
+        fi
+      env:
+        NODE_ENV: production
+        
     - name: Build
       run: npm run build
       env:
@@ -42,6 +55,17 @@ jobs:
       run: |
         echo "API Key exists: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY != '' && 'YES' || 'NO' }}"
         echo "API Key length: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY && length(secrets.VITE_GOOGLE_MAPS_API_KEY) || 0 }}"
+        
+    - name: Check built files for API key
+      run: |
+        echo "Checking if API key is included in built files..."
+        if grep -r "AIzaSy" dist/ 2>/dev/null; then
+          echo "API key found in built files"
+        else
+          echo "API key NOT found in built files"
+        fi
+        echo "Checking for import.meta.env references:"
+        grep -r "import\.meta\.env" dist/ 2>/dev/null || echo "No import.meta.env references found"
     
     - name: Create .nojekyll file
       run: touch dist/.nojekyll

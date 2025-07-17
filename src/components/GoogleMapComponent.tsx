@@ -77,7 +77,24 @@ export const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ posts, o
           elementType: 'labels',
           stylers: [{ visibility: 'off' }]
         }
-      ]
+      ],
+      mapTypeControl: true,
+      mapTypeControlOptions: {
+        position: google.maps.ControlPosition.TOP_RIGHT,
+        style: google.maps.MapTypeControlStyle.DROPDOWN_MENU
+      },
+      zoomControl: true,
+      zoomControlOptions: {
+        position: google.maps.ControlPosition.RIGHT_TOP
+      },
+      fullscreenControl: true,
+      fullscreenControlOptions: {
+        position: google.maps.ControlPosition.TOP_RIGHT
+      },
+      streetViewControl: true,
+      streetViewControlOptions: {
+        position: google.maps.ControlPosition.RIGHT_TOP
+      }
     });
 
     // マップクリックイベント

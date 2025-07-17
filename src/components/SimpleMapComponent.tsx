@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MoodMarker } from './MoodMarker';
 import { MoodForm } from './MoodForm';
 import { MoodPost, MapPosition } from '../types';
+import { filterRecentPosts } from '../utils/timeFilter';
 
 interface SimpleMapComponentProps {
   posts: MoodPost[];
@@ -13,6 +14,7 @@ export const SimpleMapComponent: React.FC<SimpleMapComponentProps> = ({ posts, o
   const [userLocation, setUserLocation] = useState<MapPosition>({ lat: 35.6762, lng: 139.6503 });
   const [mapCenter, setMapCenter] = useState<MapPosition>({ lat: 35.6762, lng: 139.6503 });
   const [zoom, setZoom] = useState(13);
+  const [forceUpdate, setForceUpdate] = useState(0);
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -30,6 +32,15 @@ export const SimpleMapComponent: React.FC<SimpleMapComponentProps> = ({ posts, o
         }
       );
     }
+  }, []);
+
+  // 定期的にマーカーを更新してリアルタイムで期限切れ投稿を削除
+  useEffect(() => {
+    const updateInterval = setInterval(() => {
+      setForceUpdate(prev => prev + 1);
+    }, 60 * 1000); // 1分間隔
+
+    return () => clearInterval(updateInterval);
   }, []);
 
   const handleMapClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -53,9 +64,9 @@ export const SimpleMapComponent: React.FC<SimpleMapComponentProps> = ({ posts, o
     setSelectedPosition(null);
   };
 
-  const shouldShowTooltip = (post: MoodPost) => {
+  const shouldShowTooltip = (post: MoodPost, filteredPosts: MoodPost[]) => {
     const radius = 0.01;
-    const nearbyPosts = posts.filter(p => {
+    const nearbyPosts = filteredPosts.filter(p => {
       const distance = Math.sqrt(
         Math.pow(p.lat - post.lat, 2) + Math.pow(p.lng - post.lng, 2)
       );
@@ -63,6 +74,16 @@ export const SimpleMapComponent: React.FC<SimpleMapComponentProps> = ({ posts, o
     });
     return nearbyPosts.length < 3;
   };
+
+  // 24時間以内の投稿をフィルタリング（リアルタイムチェック）
+  const recentPosts = React.useMemo(() => {
+    const filtered = filterRecentPosts(posts);
+    if (filtered.length !== posts.length) {
+      console.log(`Filtered out ${posts.length - filtered.length} expired posts from simple map`);
+    }
+    return filtered;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [posts, forceUpdate]);
 
   return (
     <div className="relative w-full h-full">
@@ -90,11 +111,11 @@ export const SimpleMapComponent: React.FC<SimpleMapComponentProps> = ({ posts, o
         />
         
         {/* 投稿マーカー */}
-        {posts.map((post) => (
+        {recentPosts.map((post) => (
           <MoodMarker
             key={post.id}
             post={post}
-            shouldShowTooltip={shouldShowTooltip(post)}
+            shouldShowTooltip={shouldShowTooltip(post, recentPosts)}
           />
         ))}
         
@@ -124,13 +145,6 @@ export const SimpleMapComponent: React.FC<SimpleMapComponentProps> = ({ posts, o
         onSubmit={handleSubmit}
         onCancel={handleCancel}
       />
-      
-      <style jsx>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-          50% { opacity: 0.7; transform: translate(-50%, -50%) scale(1.1); }
-        }
-      `}</style>
     </div>
   );
 };

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MoodPost, MapPosition } from '../types';
 import { MoodForm } from './MoodForm';
 import { loadGoogleMapsAPI } from '../utils/googleMaps';
+import { filterRecentPosts } from '../utils/timeFilter';
 
 interface GoogleMapComponentProps {
   posts: MoodPost[];
@@ -31,6 +32,7 @@ export const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ posts, o
   const [isAPILoaded, setIsAPILoaded] = useState(false);
   const [openInfoWindowId, setOpenInfoWindowId] = useState<string | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [forceUpdate, setForceUpdate] = useState(0);
 
   useEffect(() => {
     const initializeAPI = async () => {
@@ -45,6 +47,15 @@ export const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ posts, o
     };
 
     initializeAPI();
+  }, []);
+
+  // 定期的にマーカーを更新してリアルタイムで期限切れ投稿を削除
+  useEffect(() => {
+    const updateInterval = setInterval(() => {
+      setForceUpdate(prev => prev + 1);
+    }, 60 * 1000); // 1分間隔
+
+    return () => clearInterval(updateInterval);
   }, []);
 
   useEffect(() => {
@@ -93,11 +104,19 @@ export const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ posts, o
     markersRef.current.forEach(marker => marker.setMap(null));
     infoWindowsRef.current.forEach(infoWindow => infoWindow.close());
 
+    // 24時間以内の投稿のみをフィルタリング（リアルタイムチェック）
+    const recentPosts = filterRecentPosts(posts);
+    
+    // 期限切れ投稿があることをログに出力
+    if (recentPosts.length !== posts.length) {
+      console.log(`Filtered out ${posts.length - recentPosts.length} expired posts from map`);
+    }
+
     const newMarkers: google.maps.Marker[] = [];
     const newInfoWindows: google.maps.InfoWindow[] = [];
     const markerInfoMap = new Map<string, { marker: google.maps.Marker, infoWindow: google.maps.InfoWindow }>();
 
-    posts.forEach((post) => {
+    recentPosts.forEach((post) => {
       // カスタムマーカーを作成
       const marker = new google.maps.Marker({
         position: { lat: post.lat, lng: post.lng },
@@ -172,7 +191,7 @@ export const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ posts, o
 
     // 現在開いているインフォウィンドウを復元
     if (openInfoWindowId) {
-      const targetPost = posts.find(p => p.id === openInfoWindowId);
+      const targetPost = recentPosts.find(p => p.id === openInfoWindowId);
       if (targetPost) {
         const targetInfo = markerInfoMap.get(openInfoWindowId);
         if (targetInfo) {
@@ -180,7 +199,7 @@ export const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ posts, o
         }
       }
     }
-  }, [map, posts, openInfoWindowId]);
+  }, [map, posts, openInfoWindowId, forceUpdate]);
 
 
 

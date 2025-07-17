@@ -1,5 +1,6 @@
 import React from 'react';
 import { MoodPost } from '../types';
+import { getTimeAgo } from '../utils/timeFilter';
 
 interface MoodMarkerProps {
   post: MoodPost;
@@ -113,9 +114,12 @@ export const MoodMarker: React.FC<MoodMarkerProps> = ({ post, shouldShowTooltip 
           <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '8px' }}>
             {post.comment}
           </p>
-          <p style={{ fontSize: '12px', color: '#9ca3af' }}>
-            {new Date(post.timestamp).toLocaleString()}
-          </p>
+          <div style={{ fontSize: '12px', color: '#9ca3af' }}>
+            <div>{new Date(post.timestamp).toLocaleString()}</div>
+            <div style={{ marginTop: '2px', fontWeight: '500', color: '#6366f1' }}>
+              {getTimeAgo(post.timestamp)}
+            </div>
+          </div>
         </div>
       )}
     </div>

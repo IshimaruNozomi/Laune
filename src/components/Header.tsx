@@ -35,7 +35,7 @@ export const Header: React.FC<HeaderProps> = ({ postsCount, onClearPosts, onRefr
           <button
             onClick={onClearPosts}
             className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-            title="すべての投稿を削除"
+            title="ローカルの投稿データを削除"
           >
             <Trash2 size={18} />
           </button>
@@ -45,6 +45,9 @@ export const Header: React.FC<HeaderProps> = ({ postsCount, onClearPosts, onRefr
       <div className="px-4 pb-3">
         <p className="text-sm text-gray-600">
           📍 マップをクリックして、その場所での気分を投稿しよう！他のユーザーの投稿もリアルタイムで表示されます。
+        </p>
+        <p className="text-xs text-gray-500 mt-1">
+          ⏰ 投稿は24時間後に自動的に削除されます（1分間隔で自動チェック）
         </p>
       </div>
     </header>
